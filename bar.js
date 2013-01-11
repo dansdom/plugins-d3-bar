@@ -150,26 +150,26 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             container.bars
                 .transition()
                 .duration(container.opts.speed)
-                .attr("x", function(d) { return container.xScale(d.x1); })
+                .attr("x", function(d) { return container.xScale(d[container.opts.dataStructure.x]); })
                 .attr("width", function() {
                     // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
                     var barWidth = container.opts.elements.barWidth;
                     return barWidth;
                 })
-                .attr("y", function(d) { return container.yScale(d.y1); })
-                .attr("height", function(d) {return container.height - container.yScale(d.y1); });
+                .attr("y", function(d) { return container.yScale(d[container.opts.dataStructure.y]); })
+                .attr("height", function(d) {return container.height - container.yScale(d[container.opts.dataStructure.y]); });
             
             container.bars.enter()
                 .append("rect")
                 .attr("class", "bar")
-                .attr("x", function(d) { return container.xScale(d.x1); })
+                .attr("x", function(d) { return container.xScale(d[container.opts.dataStructure.x]); })
                 .attr("width", function() {
                     // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
                     var barWidth = container.opts.elements.barWidth;
                     return barWidth;
                 })
-                .attr("y", function(d) { return container.yScale(d.y1); })
-                .attr("height", function(d) {return container.height - container.yScale(d.y1); })
+                .attr("y", function(d) { return container.yScale(d[container.opts.dataStructure.y]); })
+                .attr("height", function(d) {return container.height - container.yScale(d[container.opts.dataStructure.y]); })
                 .style("fill-opacity", 1e-6)
                 .transition()
                 .duration(container.opts.speed)
@@ -187,7 +187,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             return data;
         },
         // need to do some thinking around these next 2 functions
-        // NOTE: there is SOO much to do in this function. definately will have to go back and make the scales more flexible
+        // NOTE: there is SOO much to do in this function. definately will have to go back and make the scales more flexible - not sure if the bar chart should have non-ordinal scales
         setScale : function() {
             var container = this;
 
