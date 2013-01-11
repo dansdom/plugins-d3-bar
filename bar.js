@@ -38,8 +38,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         'colorRange' : [], // instead of defining a color array, I will set a color scale and then let the user overwrite it
         // maybe only if there is one data set???
         'elements' : {
-            'shape' : 'yellow',  // I'll have more than just circles here - set to null if no shape is wanted
-            'line' : 'black',  // the line on the graph - set to null if no line is wanted
+            'bars' : 'yellow',  // I'll have more than just circles here - set to null if no shape is wanted
+            'barWidth' : 10,  // width of each iondividual bar
             //'area' : 'white',  // I think if there are multiple areas, then I may use the colorRange
             'dot' : '#ccc', // the dots on the line (I may make this a customisable shape though) - set to null if no dot is wanted
             'x' : true, //  x-axis - set to null if not wanted - leaving the colors for the stylesheet
@@ -69,6 +69,14 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         },
         updateChart : function() {
             var container = this;
+
+            // if there is a colour range defined for this chart then use the settings. If not, use the inbuild category20 colour range
+            if (this.opts.colorRange.length > 0) {
+                container.color = d3.scale.ordinal().range(this.opts.colorRange);
+            }
+            else {
+                container.color = d3.scale.category20();
+            }
 
             container.margin = this.opts.margin,
             container.width = this.opts.width - container.margin.left - container.margin.right;
@@ -143,7 +151,11 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .transition()
                 .duration(container.opts.speed)
                 .attr("x", function(d) { return container.xScale(d.x1); })
-                .attr("width", 10)  // I need to figure out how to set these properly
+                .attr("width", function() {
+                    // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
+                    var barWidth = container.opts.elements.barWidth;
+                    return barWidth;
+                })
                 .attr("y", function(d) { return container.yScale(d.y1); })
                 .attr("height", function(d) {return container.height - container.yScale(d.y1); });
             
@@ -151,7 +163,11 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .append("rect")
                 .attr("class", "bar")
                 .attr("x", function(d) { return container.xScale(d.x1); })
-                .attr("width", 10)  // I need to figure out how to set these properly
+                .attr("width", function() {
+                    // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
+                    var barWidth = container.opts.elements.barWidth;
+                    return barWidth;
+                })
                 .attr("y", function(d) { return container.yScale(d.y1); })
                 .attr("height", function(d) {return container.height - container.yScale(d.y1); })
                 .style("fill-opacity", 1e-6)
@@ -184,6 +200,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 ])
                 // set the range to go from 0 to the width of the chart
                 .range([0, this.width]);
+
+            // if the scale is ordinal then add the rangeBounds - e.g.: .rangeRoundBands([0, width], .1);  (http://bl.ocks.org/3885304)
 
             this.yScale = d3.scale[container.opts.scale.y]()
                 // setting the Y scale domain to go from 0 to the max value of the data.y set
