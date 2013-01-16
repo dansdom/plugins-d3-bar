@@ -9,15 +9,36 @@
   </head>
   <body>
     <div id="chart1"></div>
-    <div id="chart2"></div>
+     <div id="chart2"></div>
+    
     <script type="text/javascript">
 
       var chart1 = document.getElementById("chart1");
+      var chart2 = document.getElementById("chart2");
       
       d3.bar(chart1, {
         'height': 250,
         'width': 600,
-        'dataUrl' : 'data2.csv'
+        'dataUrl' : 'data2.csv',
+        'dataStructure' : {
+            'x' : 'x1', 
+            'y' : 'y1'
+        }
+      });
+      
+
+       d3.bar(chart2, {
+        'height': 250,
+        'width': 600,
+        'dataUrl' : 'data3.csv',
+        'dataStructure' : {
+            'x' : 'letter', 
+            'y' : 'value'
+        },
+        'scale' : {
+            'x' : 'ordinal',
+            'y' : 'linear'  // I'm making both ordinal for now. I may change later
+        }
       });
 
       function update1() {
@@ -26,6 +47,14 @@
 
        function update2() {
         d3.bar(chart1, "updateData", "data2.csv");
+      };
+
+      function update3() {
+        d3.bar(chart2, "updateData", "data4.csv");
+      };
+
+       function update4() {
+        d3.bar(chart2, "updateData", "data3.csv");
       };
 
       function makeSineWave() {
@@ -38,7 +67,11 @@
       };
       
     </script>
-    <button id="btn1" onclick="update1()">data 1</button>
-    <button id="btn2" onclick="update2()">data 1</button>
+    <button id="btn1" onclick="update1()">graph 1, data 2</button>
+    <button id="btn2" onclick="update2()">graph 1, data 1</button>
+
+   
+    <button id="btn3" onclick="update3()">graph 2, data 2</button>
+    <button id="btn4" onclick="update4()">graph 2, data 1</button>
   </body>
 </html>
