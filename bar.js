@@ -31,24 +31,36 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         'height': '730',
         'width': '460',
         'speed' : 1000,  // transition speed
-        'margin': {top: 30, right: 10, bottom: 30, left: 30},
+        'margin': {top: 30, right: 10, bottom: 80, left: 80},
         'data' : null,  // I'll need to figure out how I want to present data options to the user
         'dataUrl' : null,  // this is a url for a resource
         'dataType' : 'json',
         'colorRange' : [], // instead of defining a color array, I will set a color scale and then let the user overwrite it
         // maybe only if there is one data set???
         'elements' : {
-            'bars' : '#fd8d3c',  // I'll have more than just circles here - set to null if no shape is wanted
+            'bars' : '#fd8d3c', 
             'barWidth' : 10,  // width of each iondividual bar
             'x' : true, //  x-axis - set to null if not wanted - leaving the colors for the stylesheet
-            'y' : true //   y-axis - set to null if not wanted - leaving the colors for the stylesheet
+            'y' : true, //   y-axis - set to null if not wanted - leaving the colors for the stylesheet
+            'label' : {  // category labels for the x and y axis
+                'x' : {
+                    'visible' : true,  // is the label visible?
+                    'offsetX' : 0,  // offset X value
+                    'offsetY' : 40  // offset Y value
+                },
+                'y' : {
+                    'visible' : true,  // is the label visible?
+                    'offsetX' : -40,  // offset X value
+                    'offsetY' : 0  // offset Y value
+                }
+            }
         },
         'fontSize' : 12,
         'dataStructure' : {
             'x' : 'name',  // this value may end up being an array so I can support multiple data sets. These define the axis' for ordinal scale
             'y' : 'value',
-            'ticksX' : 2,  // tha amount of ticks on the x-axis
-            'ticksY' : 2  // the amount of ticks on the y-axis
+            'ticksX' : 10,  // tha amount of ticks on the x-axis
+            'ticksY' : 5  // the amount of ticks on the y-axis
         },
         'scale' : {
             'x' : 'linear',  // add ordinal support
@@ -91,6 +103,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             this.addElements();
             // add the x and y axis to the chart
             this.addAxis();
+            // add labels to the axis
+            this.addAxisLabels();
             
         },
         setLayout : function() {
@@ -138,6 +152,57 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 //.style("stroke", "#000")
                 .style("shape-rendering", "crispEdges")
                 .call(container.yAxis);
+        },
+        addAxisLabels : function() {
+            var container = this,
+                labels = container.opts.elements.label;
+
+            if (container.X && labels.x.visible) {
+                // add a label to the X axis
+                if (!container.XLabel) {
+                    container.XLabel = container.X.append("text");
+                }
+                // add the settings to the label
+                container.XLabel
+                    .attr("dx", function() {
+                        var chartLength = container.width;
+                        var labelPosition = (chartLength/2) + labels.x.offsetX;
+                        return labelPosition;
+                    })
+                    .attr("dy", labels.x.offsetY)
+                    .style("shape-rendering", "crispEdges")
+                    .text(container.opts.dataStructure.x);
+            }
+            else {
+                // remove the labels if they exist
+                if (container.XLabel && container.X) {
+                    container.X.remove();
+                }
+            }
+
+            if (container.Y && labels.x.visible) {
+                // add a label to the Y axis
+                if (!container.YLabel) {
+                    container.YLabel = container.Y.append("text");
+                }
+                container.YLabel
+                    .attr("dy", labels.y.offsetX)
+                    // note, this is tricky because of the rotation it is actually the "dx" value that gives the vertical positon and not the "dy" value
+                    .attr("dx", function() {
+                        var chartHeight = container.height;
+                        var labelPosition = (chartHeight/2) + labels.y.offsetY;
+                        return -labelPosition;
+                    })
+                    .style("shape-rendering", "crispEdges")
+                    .attr("transform", "rotate(270)")
+                    .text(container.opts.dataStructure.y);
+            }
+            else {
+                // remove the labels if they exist
+                if (container.YLabel && container.y) {
+                    container.Y.remove();
+                }
+            }
         },
         addElements : function() {
             var container = this;
@@ -192,7 +257,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .duration(container.opts.speed)
                 .style("fill-opacity", 1e-6)
                 .remove();
-            
         },
         isScaleNumeric : function(scale) {
             // find out whether the scale is numeric or not
@@ -295,7 +359,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
 
             var container = this;
             // need to add tick options here
-
             container.xAxis = d3.svg.axis()
                 .scale(container.xScale)
                 .ticks(container.opts.dataStructure.ticksX)
