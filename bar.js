@@ -206,7 +206,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
 
             if (yOpts.label) {
                 if (!container.YLabel) {
-                    console.log('appending y');
                     container.YLabel = container.Y.append("text");
                 }
                 container.YLabel
