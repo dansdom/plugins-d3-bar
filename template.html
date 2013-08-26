@@ -26,7 +26,6 @@
         }
       });
       
-
        d3.bar(chart2, {
         'height': 250,
         'width': 600,
@@ -41,20 +40,73 @@
         }
       });
 
+
       function update1() {
-        d3.bar(chart1, "updateData", "data1.csv");
+        var settings = {
+          'dataUrl' : 'data1.csv',
+          'elements' : {
+            'barColor' : '#fd8d3c',
+            'barWidth' : 10,
+            'xAxis' : {
+                'visible' : true,
+                'tickSize' : 10,
+                'line' : true,
+                'label' : true,
+                'labelOffsetX' : 0,
+                'labelOffsetY' : 40,
+                'labelRotate' : 0
+            },
+            'yAxis' : {
+                'visible' : false,
+                'line' : true,
+                'label' : true,
+                'labelOffsetX' : -40,
+                'labelOffsetY' : 0,
+                'labelRotate' : -90
+            }
+          }
+        }
+        d3.bar(chart1, settings);
       };
 
        function update2() {
-        d3.bar(chart1, "updateData", "data2.csv");
+        var settings = {
+          'dataUrl' : 'data2.csv',
+          'elements' : {
+            'barColor' : '#fd8',
+            'barWidth' : 5,
+            'xAxis' : {
+                'visible' : true,
+                'tickSize' : 0,
+                'label' : true,
+                'labelOffsetX' : 0,
+                'labelOffsetY' : 40,
+                'labelRotate' : 0
+            },
+            'yAxis' : {
+                'visible' : true,
+                'label' : true,
+                'labelOffsetX' : -40,
+                'labelOffsetY' : 0,
+                'labelRotate' : -90
+            }
+          }
+        }
+        d3.bar(chart1, settings);
       };
 
       function update3() {
-        d3.bar(chart2, "updateData", "data4.csv");
+        var settings = {
+          'dataUrl' : 'data4.csv'
+        }
+        d3.bar(chart2, settings);
       };
 
        function update4() {
-        d3.bar(chart2, "updateData", "data3.csv");
+        var settings = {
+          'dataUrl' : 'data3.csv'
+        }
+        d3.bar(chart2, settings);
       };
 
       function makeSineWave() {
