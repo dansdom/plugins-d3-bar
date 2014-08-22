@@ -1,0 +1,52 @@
+[
+      {
+         "topic":"Education",
+         "count":"5",
+         "action":"share-facebook"
+      },
+      {
+         "topic":"National Security",
+         "count":"3",
+         "action":"share-facebook"
+      },
+      {
+         "topic":"Disasters and Accidents",
+         "count":"8",
+         "action":"share-facebook"
+      },
+      {
+         "topic":"Education",
+         "count":"8",
+         "action":"share-twitter"
+      },
+      {
+         "topic":"Disasters and Accidents",
+         "count":"18",
+         "action":"share-twitter"
+      },
+      {
+         "topic":"Society",
+         "count":"21",
+         "action":"share-email"
+      },
+      {
+         "topic":"Disasters and Accidents",
+         "count":"13",
+         "action":"share-email"
+      },
+      {
+         "topic":"Education",
+         "count":"1",
+         "action":"share-google"
+      },
+      {
+         "topic":"National Security",
+         "count":"1",
+         "action":"share-google"
+      },
+      {
+         "topic":"Disasters and Accidents",
+         "count":"12",
+         "action":"share-google"
+      }
+   ]

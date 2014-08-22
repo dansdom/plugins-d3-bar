@@ -1,26 +1,22 @@
 // extend code
 // https://github.com/dansdom/extend
-var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=arguments.length,j=!1,d={hasOwn:Object.prototype.hasOwnProperty,class2type:{},type:function(a){return null==a?String(a):d.class2type[Object.prototype.toString.call(a)]||"object"},isPlainObject:function(a){if(!a||"object"!==d.type(a)||a.nodeType||d.isWindow(a))return!1;try{if(a.constructor&&!d.hasOwn.call(a,"constructor")&&!d.hasOwn.call(a.constructor.prototype,"isPrototypeOf"))return!1}catch(c){return!1}for(var b in a);return void 0===b||d.hasOwn.call(a, b)},isArray:Array.isArray||function(a){return"array"===d.type(a)},isFunction:function(a){return"function"===d.type(a)},isWindow:function(a){return null!=a&&a==a.window}};"boolean"===typeof c&&(j=c,c=arguments[1]||{},f=2);"object"!==typeof c&&!d.isFunction(c)&&(c={});k===f&&(c=this,--f);for(;f<k;f++)if(null!=(h=arguments[f]))for(g in h)b=c[g],e=h[g],c!==e&&(j&&e&&(d.isPlainObject(e)||(i=d.isArray(e)))?(i?(i=!1,b=b&&d.isArray(b)?b:[]):b=b&&d.isPlainObject(b)?b:{},c[g]=Extend(j,b,e)):void 0!==e&&(c[g]= e));return c};
+var extend = extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=arguments.length,j=!1,d={hasOwn:Object.prototype.hasOwnProperty,class2type:{},type:function(a){return null==a?String(a):d.class2type[Object.prototype.toString.call(a)]||"object"},isPlainObject:function(a){if(!a||"object"!==d.type(a)||a.nodeType||d.isWindow(a))return!1;try{if(a.constructor&&!d.hasOwn.call(a,"constructor")&&!d.hasOwn.call(a.constructor.prototype,"isPrototypeOf"))return!1}catch(c){return!1}for(var b in a);return void 0===b||d.hasOwn.call(a, b)},isArray:Array.isArray||function(a){return"array"===d.type(a)},isFunction:function(a){return"function"===d.type(a)},isWindow:function(a){return null!=a&&a==a.window}};"boolean"===typeof c&&(j=c,c=arguments[1]||{},f=2);"object"!==typeof c&&!d.isFunction(c)&&(c={});k===f&&(c=this,--f);for(;f<k;f++)if(null!=(h=arguments[f]))for(g in h)b=c[g],e=h[g],c!==e&&(j&&e&&(d.isPlainObject(e)||(i=d.isArray(e)))?(i?(i=!1,b=b&&d.isArray(b)?b:[]):b=b&&d.isPlainObject(b)?b:{},c[g]=extend(j,b,e)):void 0!==e&&(c[g]= e));return c};
 
 // D3 Bar Graph template
-(function (d3) {
+(function (d3, undefined) {
     // this ones for you 'uncle' Doug!
     'use strict';
     
     // Plugin namespace definition
-    d3.Bar = function (options, element, callback)
-    {
+    d3.Bar = function (options, element, callback) {
         this.el = element;
+        this.callback = callback;
         // this is the namespace for all bound event handlers in the plugin
         this.namespace = "bar";
         // extend the settings object with the options, make a 'deep' copy of the object using an empty 'holding' object
         // using the extend code that I ripped out of jQuery
-        this.opts = Extend(true, {}, d3.Bar.settings, options);
+        this.opts = extend(true, {}, d3.Bar.settings, options);
         this.init();
-        // run the callback function if it is defined
-        if (typeof callback === "function") {
-            callback.call();
-        }
     };
     
     // these are the plugin default settings that will be over-written by user settings
@@ -32,18 +28,25 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         'data' : null,  // I'll need to figure out how I want to present data options to the user
         'dataUrl' : null,  // this is a url for a resource
         'dataType' : 'json',
-        'colorRange' : [], // instead of defining a color array, I will set a color scale and then let the user overwrite it
+        'dateFormat' : '%d-%b-%y',  // if a date scale is being used then this is the option to format it
+        'colorRange' : ["#3182bd","#6baed6","#9ecae1","#c6dbef","#e6550d","#fd8d3c","#fdae6b","#fdd0a2","#31a354","#74c476","#a1d99b","#c7e9c0","#756bb1","#9e9ac8","#bcbddc","#dadaeb","#636363","#969696","#bdbdbd","#d9d9d9"], // instead of defining a color array, I will set a color scale and then let the user overwrite it
         // maybe only if there is one data set???
         'elements' : {
-            'barColor' : '#fd8d3c',
-            'barWidth' : 10,
+            'layoutType' : 'stacked',  // 'stacked' or 'grouped'
+            'barOpacity' : 1,
+            'barWidth' : 20,  // only set when linear scale. If ordinal then it will be calculated automatically
             'xAxis' : {
                 'visible' : true,
                 'tickSize' : 5,
                 'label' : true,
                 'labelOffsetX' : 0,
                 'labelOffsetY' : 40,
-                'labelRotate' : 0
+                'labelRotate' : 0,
+                'rangeMin' : null, // can set a value for the minimum range on the x-axis
+                'rangeMax' : null,  // can set a value for the maximum range on the x-axis
+                'domainMin' : null, // will accept 'data-min'. can maually set the minimum value of the chart's domain
+                'domainMax' : null,  // can maually set the maximum value of the chart's domain
+                'domainCustom' : null // can specify a custom domain for the X axis
             },
             'yAxis' : {
                 'visible' : true,
@@ -51,18 +54,33 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 'label' : true,
                 'labelOffsetX' : -40,
                 'labelOffsetY' : 0,
-                'labelRotate' : -90
+                'labelRotate' : -90,
+                'rangeMin' : null, // can set a value for the minimum range on the x-axis
+                'rangeMax' : null,  // can set a value for the maximum range on the x-axis
+                'domainMin' : null, // will accept 'data-min'. can maually set the minimum value of the chart's domain
+                'domainMax' : null,  // can maually set the maximum value of the chart's domain
+                'domainCustom' : null // can specify a custom domain for the Y axis
             }
         },
         'dataStructure' : {
             'x' : 'name',  // this value may end up being an array so I can support multiple data sets. These define the axis' for ordinal scale
             'y' : 'value',
+            'key' : 'key',
             'ticksX' : 10,  // tha amount of ticks on the x-axis
             'ticksY' : 5  // the amount of ticks on the y-axis
         },
         'scale' : {
             'x' : 'linear',  // add ordinal support
             'y' : 'linear'
+        },
+        'legend' : { // shows a legend for the groups
+            'visible' : true,  // set false for no legend
+            'size' : 16,  // line height/ font-size and box size for each legend item
+            'align' : 'right', // align 'left' or 'right' of the chart
+            'offset' : {  // offset of the legend
+                'x' : 0,
+                'y' : 0
+            }
         },
         'chartName' : false  // If there is a chart name then insert the value. This allows for deep exploration to show category name
     };
@@ -86,7 +104,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 container.color = d3.scale.category20();
             }
 
-            container.margin = this.opts.margin,
+            container.margin = this.opts.margin;
             container.width = this.opts.width - container.margin.left - container.margin.right;
             container.height = this.opts.height - container.margin.top - container.margin.bottom; 
 
@@ -96,22 +114,34 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
 
             // create the svg element that holds the chart
             this.setLayout();
+            // set the title
+            this.setTitle();
             // add the elements to the chart
             this.addElements();
             // add the x and y axis to the chart
             this.addAxis();
+
+            // make the legend
+            this.setLegend();
+
+            // run the callback function after the plugin has finished initialising
+            if (typeof container.callback === "function") {
+                container.callback.call(this, container);
+            }
         },
         setLayout : function() {
             var container = this;
 
             // define the svg element
             if (!container.svg) {
-                container.svg = d3.select(container.el).append("svg")      
+                container.svg = d3.select(container.el).append("svg");     
             }
             container.svg
                 .datum(container.data)
-                .attr("width", container.width + container.margin.left + container.margin.right)
-                .attr("height", container.height + container.margin.top + container.margin.bottom);
+                .attr({
+                    "width" : container.width + container.margin.left + container.margin.right,
+                    "height" : container.height + container.margin.top + container.margin.bottom
+                });
 
             // define the chart element
             if (!container.chart) {
@@ -119,8 +149,10 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     
             }
             container.chart
-                .attr("class", "chart")
-                .attr("transform", "translate(" + container.margin.left + "," + container.margin.top + ")");
+                .attr({
+                    "class" : "chart",
+                    "transform" : "translate(" + container.margin.left + "," + container.margin.top + ")"
+                });
         },
         setTitle : function() {
             var container = this;
@@ -136,6 +168,139 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     .text(container.opts.chartName);
             }
         },
+        setLegend : function() {
+            var container = this,
+                newGroups,
+                oldGroups,
+                legendOpts = container.opts.legend,
+                legendSize = parseFloat(legendOpts.size) || 20,
+                legendX = parseFloat(legendOpts.offset.x) || 0,
+                legendY = parseFloat(legendOpts.offset.y) || 0;
+
+            function updateGroups(groups) {
+                groups.each(function(d, i) {
+                    var currentGroup = d3.select(this);
+                    currentGroup.attr({
+                            "class" : function(d) { return "legend-group " + d.key; },
+                            "transform" : function() { return "translate(" + legendX + ", " + ((i * (legendSize + 2)) + legendY) + ")"; }
+                        });
+
+                    currentGroup.select("text")
+                        .text(function(d) { return d.key; })
+                        .attr({
+                            "x" : function() { //container.width - 5
+                                if (legendOpts.align === 'left') {
+                                    return legendSize + 5;
+                                } else {
+                                    return container.width - 5;
+                                }
+                            }, 
+                            "y" : legendOpts.size / 2,
+                            "dy" : ".35em"
+                        })
+                        .style({
+                            "text-anchor" : function() {
+                                if (legendOpts.align === "left") {
+                                    return "start";
+                                } else {
+                                    return "end";
+                                }
+                            },
+                            "font-size" : legendOpts.size - 4  + "px"
+                        });
+
+                    currentGroup.select("rect")
+                        .attr({
+                            "fill" : function(d) { return container.opts.colorRange[i]; },
+                            "width" : legendOpts.size,
+                            "height" : legendOpts.size,
+                            "x" : function() { //container.width
+                                if (legendOpts.align === 'left') {
+                                    return 0;
+                                } else {
+                                    return container.width;
+                                }
+                            } 
+                        });
+                });
+            }
+
+            function addGroups(groups) {
+                groups.each(function(d, i) {
+                    var currentGroup = d3.select(this);
+                    currentGroup
+                        .attr({
+                            "class" : function(d) { return "legend-group " + d.key; },
+                            "transform" : function() { return "translate(" + legendX + ", " + ((i * (legendSize + 2)) + legendY) + ")"; }
+                        });
+
+                    currentGroup.append("text")
+                        .text(function(d) { return d.key; })
+                        .attr({
+                            "x" : function() { //container.width - 5
+                                if (legendOpts.align === 'left') {
+                                    return legendSize + 5;
+                                } else {
+                                    return container.width - 5;
+                                }
+                            }, 
+                            "y" : legendOpts.size / 2,
+                            "dy" : ".35em"
+                        })
+                        .style({
+                            "text-anchor" : function() {
+                                if (legendOpts.align === "left") {
+                                    return "start";
+                                } else {
+                                    return "end";
+                                }
+                            },
+                            "font-size" : legendOpts.size - 4  + "px"
+                        });
+
+                    currentGroup.append("rect")
+                        .attr({
+                            "fill" : function(d) { return container.opts.colorRange[i]; },
+                            "width" : legendOpts.size,
+                            "height" : legendOpts.size,
+                            "x" : function() { //container.width
+                                if (legendOpts.align === 'left') {
+                                    return 0;
+                                } else {
+                                    return container.width;
+                                }
+                            }
+                        });
+                });
+            }
+
+            if (legendOpts.visible) {
+                if (!container.legend) {
+                    container.legend = container.chart.append("g")
+                        .attr("class", "legend");
+                }
+                // construct a legend for data group
+                container.legendGroups = container.legend.selectAll(".legend-group")
+                    .data(container.dataNest);
+
+                // update the current legend items
+                updateGroups(container.legendGroups);
+
+                // add the new legend items
+                newGroups = container.legendGroups.enter()
+                    .append("g")
+                    .attr("class", function(d) { return "legend-group " + d.key; })
+                addGroups(newGroups);
+
+                // remove old legend items
+                oldGroups = container.legendGroups.exit()
+                    .remove();
+
+            } else {
+                container.chart.select(".legend").remove();
+                container.legend = null;
+            }
+        },
         addAxis : function() {
             var container = this,
                 elementOpts = container.opts.elements;
@@ -148,8 +313,10 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 }
                 // style the x-axis
                 container.X
-                    .attr("class", "x-axis")
-                    .attr("transform", "translate(0," + container.height + ")")
+                    .attr({
+                        "class" : "x-axis",
+                        "transform" : "translate(0," + container.height + ")"
+                    })
                     .style("shape-rendering", "crispEdges")
                     .call(container.xAxis);
                 // add the labels
@@ -160,7 +327,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 container.X.remove();
                 // I have to set this to undefined so that I can test for it again
                 container.X = undefined;
-                containerXLabel = undefined;
+                container.XLabel = undefined;
             }
 
             // if we are building a y-axis
@@ -193,20 +360,24 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 }
                 // add the settings to the label
                 container.XLabel
-                    .attr("dx", function() {
-                        var chartLength = container.width,
-                            labelPosition = (chartLength/2) + xOpts.labelOffsetX;
-                        return labelPosition;
+                    .attr({
+                        "dx" : function() {
+                            var chartLength = container.width,
+                                labelPosition = (chartLength/2) + xOpts.labelOffsetX;
+                            return labelPosition;
+                        },
+                        "dy" : xOpts.labelOffsetY,
+                        "transform" : "rotate(" + xOpts.labelRotate + ")"
                     })
-                    .attr("dy", xOpts.labelOffsetY)
                     .style("shape-rendering", "crispEdges")
-                    .attr("transform", "rotate(" + xOpts.labelRotate + ")")
                     .text(container.opts.dataStructure.x);
             }
             // else remove the label
             else {
-                container.XLabel.remove();
-                container.XLabel = undefined;
+                if (container.XLabel) {
+                    container.XLabel.remove();
+                    container.XLabel = undefined;
+                }
             }
         },
         addYLabels : function() {
@@ -218,119 +389,332 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     container.YLabel = container.Y.append("text");
                 }
                 container.YLabel
-                    .attr("dy", yOpts.labelOffsetX)
-                    // note, this is tricky because of the rotation it is actually the "dx" value that gives the vertical positon and not the "dy" value
-                    .attr("dx", function() {
-                        var chartHeight = container.height,
-                            labelPosition = (chartHeight/2) + yOpts.labelOffsetY;
-                        return -labelPosition;
+                    .attr({
+                        "dy" : yOpts.labelOffsetX,
+                        // note, this is tricky because of the rotation it is actually the "dx" value that gives the vertical positon and not the "dy" value
+                        "dx" : function() {
+                            var chartHeight = container.height,
+                                labelPosition = (chartHeight/2) + yOpts.labelOffsetY;
+                            return -labelPosition;
+                        },
+                        "transform" : "rotate(" + yOpts.labelRotate + ")"
                     })
                     .style("shape-rendering", "crispEdges")
-                    .attr("transform", "rotate(" + yOpts.labelRotate + ")")
                     .text(container.opts.dataStructure.y);
             }
             // else remove the label
             else {
-                container.YLabel.remove();
-                container.YLabel = undefined;
+                if (container.YLabel) {
+                    container.YLabel.remove();
+                    container.YLabel = undefined;
+                }
             }
         },
         addElements : function() {
-            var container = this;
-            
-            container.bars = container.chart.selectAll(".bar")
-                .data(container.data);
+            var container = this,
+                elements = container.opts.elements,
+                dataStructure = container.opts.dataStructure,
+                currentGroups,
+                newGroups,
+                oldGroups;
 
-            container.bars
-                .transition()
-                .duration(container.opts.speed)
-                .attr("fill", container.opts.elements.barColor)
-                .attr("x", function(d) { return container.xScale(d[container.opts.dataStructure.x]); })
-                .attr("width", function() {
-                    // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
-                    var barWidth;
-                    if (container.opts.scale.x === "linear") {
-                        barWidth = container.opts.elements.barWidth;
-                    }
-                    else if (container.opts.scale.x === "ordinal") {
-                        barWidth = container.xScale.rangeBand();
-                    }
-                    return barWidth;
-                })
-                .attr("y", function(d) { return container.yScale(d[container.opts.dataStructure.y]); })
-                .attr("height", function(d) {return container.height - container.yScale(d[container.opts.dataStructure.y]) - 1; });  // the -1 here is some slight mis alingment from the d3 library
+            currentGroups = container.chart.selectAll(".data-group");
+            container.groups = container.chart.selectAll(".data-group")
+                .data(container.dataGroups);
+
+            //console.log(container.dataGroups);
+
+            // add the new data
+            newGroups = container.groups.enter()
+                .append("g")
+                .attr("class", function(d) { return "data-group"; });
+
+            // if groups then update the groups, if not then make stacks
+            if (container.opts.elements.layoutType === 'grouped') {
+                console.log('it is grouped');
+                if (container.opts.scale.x !== 'ordinal') {
+                    alert('grouped data must be on an ordinal scale. Set scale.x = "ordinal"');
+                    return;
+                } 
+                container.updateGroupedData(container.groups);
+                container.updateGroupedData(newGroups);
+            } else {
+                container.updateStackedData(container.groups);
+                container.updateStackedData(newGroups);
+            }
             
-            container.bars.enter()
+
+            // remove the old data
+            oldGroups = container.groups.exit()
+                .remove(); 
+        },
+        // updates the current groups on the chart
+        updateGroupedData : function(groups) {
+            var container = this,
+                currentGroup;
+
+            //console.log('updating ' + groups.length + ' current groups');
+            groups.each(function(d, i) {
+                //console.log(i);
+                //console.log(d);
+                //currentGroup.attr("class", function(d) { return "data-group"; });
+                container.updateGroup(this, d, i);
+            });
+        },
+        updateStackedData : function(groups) {
+            var container = this,
+                currentGroup;
+
+            //console.log('updating ' + groups.length + ' current groups');
+            groups.each(function(d,i ) {
+                //console.log(i);
+                //console.log(d);
+                //currentGroup.attr("class", function(d) { return "data-group"; });
+                container.updateStack(this, d, i);
+            });
+        },
+        updateGroup : function(group, d, i) {
+            //console.log('updating group');
+            //console.log(group);
+            //console.log(d);
+            //console.log(i);
+
+            var container = this,
+                currentGroup = d3.select(group),
+                groupBars = currentGroup.selectAll("rect").data(d.values),
+                groupItems = d.values.map(function(d) { return d[container.opts.dataStructure.key]; }),
+                groupScale = d3.scale.ordinal();
+            
+            groupScale.domain(groupItems).rangeRoundBands([0, container.xScale.rangeBand()]);
+            //console.log(groupScale.rangeBand());
+            //console.log(container.xScale(d.key));
+            currentGroup.attr("transform", function(d) { return "translate(" + container.xScale(d.key) + ",0)" });
+
+            groupBars
+                .attr({
+                    "width" : groupScale.rangeBand(),
+                    "x" : function(d, i) { return groupScale(d[container.opts.dataStructure.key]); },
+                    "y" : function(d) { return container.yScale(d[container.opts.dataStructure.y]); },
+                    "height" : function(d) { return container.height - container.yScale(d[container.opts.dataStructure.y]); }
+                })
+                .style("fill", function(d, i) { return container.opts.colorRange[i]; });
+
+            groupBars.enter()
                 .append("rect")
-                .attr("class", "bar")
-                .attr("fill", container.opts.elements.barColor)
-                .attr("x", function(d) { return container.xScale(d[container.opts.dataStructure.x]); })
-                .attr("width", function() {
-                    // if the scale is ordinal then return container.xScale.rangeBand() - else use the option
-                    var barWidth;
-                    if (container.opts.scale.x === "linear") {
-                        barWidth = container.opts.elements.barWidth;
-                    }
-                    else if (container.opts.scale.x === "ordinal") {
-                        barWidth = container.xScale.rangeBand();
-                    }
-                    return barWidth;
+                .attr({
+                    "width" : groupScale.rangeBand(),
+                    "x" : function(d, i) { return groupScale(d[container.opts.dataStructure.key]); },
+                    "y" : function(d) { return container.yScale(d[container.opts.dataStructure.y]); },
+                    "height" : function(d) { return container.height - container.yScale(d[container.opts.dataStructure.y]); }
                 })
-                .attr("y", function(d) {  return container.yScale(d[container.opts.dataStructure.y]); })
-                .attr("height", function(d) { return container.height - container.yScale(d[container.opts.dataStructure.y]) - 1; })
-                .style("fill-opacity", 1e-6)
-                .transition()
-                .duration(container.opts.speed)
-                .style("fill-opacity", 1);
+                .style("fill", function(d, i) { return container.opts.colorRange[i]; });
 
-            container.bars.exit()
-                .transition()
-                .duration(container.opts.speed)
-                .style("fill-opacity", 1e-6)
-                .remove();
+            groupBars.exit().remove();
+        },
+        updateStack : function(group, d, i) {
+            var container = this,
+                currentGroup = d3.select(group),
+                groupBars = currentGroup.selectAll("rect").data(d.values),
+                barWidth = container.opts.elements.barWidth;
+
+            if (container.opts.scale.x === 'ordinal') {
+                barWidth = container.xScale.rangeBand();
+            }
+
+            currentGroup.attr("transform", function(d) { return "translate(" + container.xScale(d.key) + ",0)" });
+
+            groupBars
+                .attr({
+                    "width" : barWidth,
+                    "x" : 0,
+                    "y" : function(d) { return container.yScale(d.y1); },
+                    "height" : function(d) { return container.yScale(d.y0) - container.yScale(d.y1); },
+                })
+                .style("fill", function(d, i) { return container.opts.colorRange[i]; });
+
+            groupBars.enter()
+                .append("rect")
+                .attr({
+                    "width" : barWidth,
+                    "x" : 0,
+                    "y" : function(d) { return container.yScale(d.y1); },
+                    "height" : function(d) { return container.yScale(d.y0) - container.yScale(d.y1); },
+                })
+                .style("fill", function(d, i) { return container.opts.colorRange[i]; });
+
+            groupBars.exit().remove();
         },
         isScaleNumeric : function(scale) {
             // find out whether the scale is numeric or not
             switch(scale) {
                 case "linear" :
                     return true;
-                    break;
                 case "pow" :
                     return true;
-                    break;
                 case "log" :
                     return true;
-                    break;
                 case "quanitze" :
                     return true;
-                    break;
                 case "identity" :
                     return true;
-                    break;
                 default : 
                     return false;
             }
         },
         parseData : function(data) {
-            // I may want to flatten out nested data here. not sure yet
             // if the scale is ordinal, I have to put in an opening value so that I can push the data across the chart
             // the first thing I have to do here is make sure the "value" field is numeric.
             var container = this,
                 scaleX = container.opts.scale.x,
                 scaleY = container.opts.scale.y,
-                dataLength = data.length;
+                dataLength = data.length,
+                i, j;
 
             if (container.isScaleNumeric(scaleX)) {
-                for (var i = 0; i < dataLength; i++) {
+                for (i = 0; i < dataLength; i++) {
                     // parse the x scale
                     data[i][container.opts.dataStructure.x] = parseFloat(data[i][container.opts.dataStructure.x]);
                 }
             }
 
             if (container.isScaleNumeric(scaleY)) {
-                for (var j = 0; j < dataLength; j++) {
+                for (j = 0; j < dataLength; j++) {
                     // parse the y scale
                     data[j][container.opts.dataStructure.y] = parseFloat(data[j][container.opts.dataStructure.y]);
+                }
+            }
+
+            // if there is a date range then parse the data as a date
+            if (container.opts.scale.x === "date") {
+                for (i = 0; i < dataLength; i++) {
+                    data[i][container.opts.dataStructure.x] = d3.time.format(container.opts.dateFormat).parse(data[i][container.opts.dataStructure.x]);
+                }
+            }
+            if (container.opts.scale.y === "date") {
+                for (j = 0; j < dataLength; j++) {
+                    data[j][container.opts.dataStructure.y] = d3.time.format(container.opts.dateFormat).parse(data[j][container.opts.dataStructure.y]);
+                }
+            }
+            
+            // define the nested data structure
+            if (!container.nest) {
+                container.nest = d3.nest()
+                    .key(function(d) { return d[container.opts.dataStructure.key]; });
+            }
+
+            var nestedData = container.nest.entries(data);
+            
+            // if the key is undefined then set it to 'none'
+            if (nestedData.length === 1) {
+                if (nestedData[0].key === 'undefined') {
+                    nestedData[0].key = 'none';
+                    for (i = 0; i < nestedData[0].values.length; i++) {
+                        nestedData[0].values[i][container.opts.dataStructure.key] = 'none';
+                    }
+                }
+            }
+
+            // unlike the area and scatterplaot chart, the daata needs to be stacked by the X axis data points, not the data groups
+            function stackData(data) {
+                var dataStack = [],
+                    xGroup,
+                    group,
+                    value,
+                    groupLabel,
+                    groupTotal,
+                    i, j, k;
+
+                for (i in data[0].values) {
+                    xGroup = [];
+                    groupTotal = 0;
+                    groupLabel = data[0].values[i][container.opts.dataStructure.x];
+                    
+                    for (j in data) {
+                        for (k in data[j].values) {
+                            if (data[j].values[k][container.opts.dataStructure.x] === groupLabel) {
+                                value = data[j].values[k];
+                                value['y0'] = groupTotal;
+                                groupTotal = groupTotal + value[container.opts.dataStructure.y];
+                                value['y1'] = groupTotal;
+                                xGroup.push(value);
+                            }
+                        }
+                        //console.log('Group Total: ' + groupTotal);
+                    }
+                    group = {
+                        key : groupLabel,
+                        values : xGroup,
+                        total : groupTotal
+                    };
+                    dataStack.push(group);
+                    //console.groupEnd();
+                }
+                //console.log(dataStack);
+                return dataStack;
+            }
+
+            // find any missing data and add a zero value for it
+            //console.log(nestedData);
+            container.dataNest = container.checkMissingValues(nestedData);
+            //console.log(container.dataNest);
+            container.dataGroups = stackData(container.dataNest);
+
+            return data;
+        },
+        // check for any missing values in the data set
+        checkMissingValues : function(data) {
+            var container = this,
+                layer,
+                layerValue,
+                layerX,
+                i, j;
+
+            function checkGroups(pointX) {
+                var layer,
+                    i, j,
+                    hasPointX,
+                    emptyDataPoint;
+               
+                for (i = 0; i < data.length; i++) {
+                    layer = data[i];
+                    //console.log(layer);
+                    hasPointX = false;
+                    for (j = 0; j < layer.values.length; j++) {
+                        //console.log(layer.values[j]);
+                        //console.log('point x: ' + pointX);
+                        if (layer.values[j][container.opts.dataStructure.x] === pointX) {
+                            hasPointX = true;
+                        }
+                    }
+                    if (!hasPointX) {
+                        emptyDataPoint = {};
+                        emptyDataPoint[container.opts.dataStructure.x] = pointX;
+                        emptyDataPoint[container.opts.dataStructure.y] = 0;
+                        emptyDataPoint[container.opts.dataStructure.key] = data[i].key;
+                        data[i].values.push(emptyDataPoint);
+                    }
+                }
+            }
+
+            for (i = 0; i < data.length; i++) {
+                layer = data[i];
+                for (j = 0; j < layer.values.length; j++) {
+                    layerValue = layer.values[j];
+                    //console.log(layerValue);
+                    layerX = layerValue[container.opts.dataStructure.x];
+                    // check each data group for this x value
+                    checkGroups(layerX);
+                }
+            }
+
+            function sortArrayValues(index) {
+                data[index].values.sort(function(a, b) { return d3.ascending(a[container.opts.dataStructure.x], b[container.opts.dataStructure.x]); });
+            }
+
+            // re-order each data layer
+            for (i = 0; i < data.length; i++) {
+                if (container.isScaleNumeric(container.opts.scale.x)) {                    
+                    sortArrayValues(i);
                 }
             }
 
@@ -339,50 +723,100 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         // need to do some thinking around these next 2 functions
         // NOTE: there is SOO much to do in this function. definately will have to go back and make the scales more flexible - not sure if the bar chart should have non-ordinal scales
         setScale : function() {
-            var container = this;
+            var container = this,
+                elements = container.opts.elements,
+                xStructure = container.opts.dataStructure.x,
+                yStructure = container.opts.dataStructure.y,
+                xScaleOpts = container.opts.scale.x,
+                yScaleOpts = container.opts.scale.y,
+                xRangeMin = elements.xAxis.rangeMin || 0,
+                yRangeMin = elements.yAxis.rangeMin || 0,
+                xRangeMax = elements.xAxis.rangeMax || container.width,
+                yRangeMax = elements.yAxis.rangeMax || container.height,
+                xDomainMin = elements.xAxis.domainMin || 0,
+                xDomainMax = elements.xAxis.domainMax || d3.max(container.data, function(d) { return d[xStructure]; }) || 0,
+                yDomainMin = elements.yAxis.domainMin || 0,
+                yDomainMax = elements.yAxis.domainMax || d3.max(container.data, function(d) { return d[yStructure]; }) || 0,
+                // domain for stacked bars
+                yDomainGroupMin = 0,
+                yDomainGroupMax = d3.max(container.dataGroups, function(d) { return d.total });
+             
+            if (xDomainMin === 'data-min') {
+                console.log('domain min is data-min');
+                xDomainMin = d3.min(container.data, function(d) { return d[xStructure]; });
+            }
+
+            if (yDomainMin === 'data-min') {
+                yDomainMin = d3.min(container.data, function(d) { return d[yStructure]; });
+                yDomainGroupMin = d3.min(container.dataGroups, function(d) { return d.total });
+            }
 
             // set the X scale
-            container.xScale = d3.scale[container.opts.scale.x]();
-            if (container.opts.scale.x === "linear") {
+            if (xScaleOpts === "date") {
+                container.xScale = d3.time.scale();
+                container.xScale
+                    .domain(d3.extent(container.data, function(d) { return d[xStructure]; }))
+                    .range([xRangeMin, xRangeMax]);
+            }
+            else {
+                container.xScale = d3.scale[xScaleOpts]();
+            }
+
+            // set the Domain and range for the X axis
+            if (xScaleOpts === "linear") {
                 // setting the X scale domain to go from the min value to the max value of the data.x set
                 // if multiple areas on the chart, I will have to check all data sets before settings the domain
                 container.xScale
-                    .domain([
-                        d3.min(container.data, function(d) { return d[container.opts.dataStructure.x]; }),
-                        d3.max(container.data, function(d) { return d[container.opts.dataStructure.x]; })
-                    ])
+                    .domain([xDomainMin, xDomainMax])
                     // set the range to go from 0 to the width of the chart
-                    .range([0, container.width]);
-            }
-            else if (container.opts.scale.x === "exponential") {
-            }
-            else if (container.opts.scale.x === "ordinal") {
+                    .range([xRangeMin, xRangeMax]);
+            }            
+            else if (xScaleOpts === "ordinal") {
                 container.xScale
-                    .domain(container.data.map(function(d) { return d[container.opts.dataStructure.x]; }))
-                    .rangeRoundBands([0, container.width], 0.1);
+                    .rangeRoundBands([xRangeMin, xRangeMax], 0.1);
+
+                // if the domain is custom and it's an array    
+                if (elements.xAxis.domainCustom && Array.isArray(elements.xAxis.domainCustom)) {
+                    container.xScale.domain(elements.xAxis.domainCustom);
+                } else {
+                    container.xScale.domain(container.data.map(function(d) { return d[xStructure]; }));
+                }
+            }
+            // hopefully I can fit into one of the two current treatments
+            else if (xScaleOpts === "pow") {
             }
 
 
             // if the scale is ordinal then add the rangeBounds - e.g.: .rangeRoundBands([0, width], .1);  (http://bl.ocks.org/3885304)
-            container.yScale = d3.scale[container.opts.scale.y]();
-            // setting the Y scale domain to go from 0 to the max value of the data.y set
-            if (container.opts.scale.y === "linear") {
+            if (yScaleOpts === "date") {
+                container.yScale = d3.time.scale();
                 container.yScale
-                    .domain([
-                        0,
-                        d3.max(container.data, function(d) { return d[container.opts.dataStructure.y]; })
-                    ])
+                    .domain(d3.extent(container.data, function(d) { return d[yStructure]; }));
+
+                container.yScale
+                    .range([yRangeMax, yRangeMin]);
+            } else {
+                container.yScale = d3.scale[container.opts.scale.y]();
+            }
+            // set the Domain and range for the Y axis
+            if (yScaleOpts === "linear") {
+                container.yScale
+                    .range([yRangeMax, yRangeMin])
+                    .domain([yDomainMin, yDomainMax]);
                     // set the range to go from 0 to the height of the chart
-                    .range([container.height, 0]);
-            }
-            else if (container.opts.scale.y === "exponential") {
-            }
-            else if (container.opts.scale.y === "ordinal") {
+                if (container.opts.elements.layoutType === 'stacked') {
+                    // if it's stacked then take the max value of any group total
+                    container.yScale
+                        .domain([yDomainGroupMin, yDomainGroupMax]);
+                }
+            } else if (yScaleOpts === "ordinal") {  // ###### more thought needs to be put into whether this  should even be here ######
                 container.yScale
-                    .domain([
-                        0, 
-                        d3.max(container.data, function(d) { return d[container.opts.dataStructure.y]; } )])
-                    .range([container.height, 0]);
+                    .domain([yDomainMin, yDomainMax]);
+                container.yScale
+                    .range([yRangeMax, yRangeMin]);
+            }
+            // hopefully I can fit into one of the two current treatments
+            else if (yScaleOpts === "pow") {
             }
         },
         setAxis : function() {
@@ -416,7 +850,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             if (container.opts.dataUrl) {
                 // go get the data from an ajax call
                 // test whether it's json or csv
-                
                 var regex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
                 var urlExt = container.opts.dataUrl.substring((container.opts.dataUrl.length - 5));
                 var fileType = urlExt.match(regex)[0];
@@ -425,7 +858,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     //console.log('do json call');
                     // build the chart
                     d3.json(container.opts.dataUrl, function(error, data) {
-                        container.data = data;
+                        container.data = container.parseData(data);
                         container.updateChart(); 
                     });
                 }
@@ -433,7 +866,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     //console.log('do csv call');
                     // build the chart
                     d3.csv(container.opts.dataUrl, function(error, data) {
-                        container.data = data;
+                        container.data = container.parseData(data);
                         container.updateChart(); 
                     });
                 }
@@ -441,7 +874,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     //console.log('do csv call');
                     // build the chart
                     d3.csv(container.opts.dataUrl, function(error, data) {
-                        container.data = data;
+                        container.data = container.parseData(data);
                         container.updateChart(); 
                     });
                 }
@@ -449,9 +882,10 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             else {
                 // the data is passed straight into the plugin form either a function or a data object
                 // I expect a JSON object here
-                container.data = container.opts.data;
+                container.data = container.parseData(container.opts.data);
+                //console.log(container.data);
                 container.updateChart(); 
-            }  
+            }    
         },
         // updates the settings of the chart
         settings : function(settings) {
@@ -461,7 +895,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 this.opts.data = null;
             }
             // I need to sort out whether I want to refresh the graph when the settings are changed
-            this.opts = Extend(true, {}, this.opts, settings);
+            this.opts = extend(true, {}, this.opts, settings);
             // will make custom function to handle setting changes
             this.getData();
         },
@@ -477,7 +911,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
     d3.bar = function(element, options, callback) {
         // define the plugin name here so I don't have to change it anywhere else. This name refers to the jQuery data object that will store the plugin data
         var pluginName = "bar",
-            args;
+            args,
+            i;
 
         function applyPluginMethod(el) {
             var pluginInstance = el[pluginName];   
@@ -495,7 +930,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             else {
                 pluginInstance[options].apply(pluginInstance, args);
             }
-        };
+        }
 
         function initialisePlugin(el) {
             // define the data object that is going to be attached to the DOM element that the plugin is being called on
@@ -512,7 +947,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 // I think I need to anchor this new object to the DOM element and bind it
                 el[pluginName] = new d3.Bar(options, el, callback);
             }
-        };
+        }
         
         // if the argument is a string representing a plugin method then test which one it is
         if ( typeof options === 'string' ) {
@@ -520,9 +955,9 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             args = Array.prototype.slice.call(arguments, 2);
             // iterate over each object that the function is being called upon
             if (element.length) {
-                for (var i = 0; i < element.length; i++) {
+                for (i = 0; i < element.length; i++) {
                     applyPluginMethod(element[i]);
-                };
+                }
             }
             else {
                 applyPluginMethod(element);
@@ -533,7 +968,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         else {
             // initialise each instance of the plugin
             if (element.length) {
-                for (var i = 0; i < element.length; i++) {
+                for (i = 0; i < element.length; i++) {
                     initialisePlugin(element[i]);
                 }
             }
