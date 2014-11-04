@@ -9,125 +9,88 @@
   </head>
   <body>
     <div id="chart1"></div>
-     <div id="chart2"></div>
-    
+    <button id="btn1" onclick="update1()">graph 1, data 2</button>
+    <button id="btn2" onclick="update2()">graph 1, data 1</button>
+    <div id="chart2"></div>
+    <button id="btn3" onclick="update3()">graph 2, data 2</button>
+    <button id="btn4" onclick="update4()">graph 2, data 1</button>
     <script type="text/javascript">
 
       var chart1 = document.getElementById("chart1");
       var chart2 = document.getElementById("chart2");
+     
       
       d3.bar(chart1, {
-        'height': 250,
-        'width': 600,
-        'dataUrl' : 'data2.csv',
+        'height': 350,
+        'width': 800,
+        'dataUrl' : 'data1.json',
+        'dataStructure' : {
+            'key' : 'topic',
+            'x' : 'action', 
+            'y' : 'count'
+        },
+        'elements' : {'barWidth' : 1},
+        'scale' : {
+            'x' : 'ordinal',
+            'y' : 'linear'  // I'm making both ordinal for now. I may change later
+        }
+      });
+
+      d3.bar(chart2, {
+        'height': 350,
+        'width': 800,
+        'dataUrl' : 'data1.csv',
         'dataStructure' : {
             'x' : 'x1', 
             'y' : 'y1'
         },
-        'elements' : {'barWidth' : 1}
-      });
-      
-       d3.bar(chart2, {
-        'height': 250,
-        'width': 600,
-        'dataUrl' : 'data3.csv',
-        'dataStructure' : {
-            'x' : 'letter', 
-            'y' : 'value'
-        },
         'scale' : {
-            'x' : 'ordinal',
+            'x' : 'linear',
             'y' : 'linear'  // I'm making both ordinal for now. I may change later
         },
         'tooltip' : {
           'id' : 'tooltip2'
+        },
+        'legend' : {
+          'visible' : false
         }
       });
-
-
+      
       function update1() {
-        var settings = {
-          'dataUrl' : 'data1.csv',
-          'elements' : {
-            'barColor' : '#fd8d3c',
-            'barWidth' : 10,
-            'xAxis' : {
-                'visible' : true,
-                'tickSize' : 10,
-                'line' : true,
-                'label' : true,
-                'labelOffsetX' : 0,
-                'labelOffsetY' : 40,
-                'labelRotate' : 0
-            },
-            'yAxis' : {
-                'visible' : false,
-                'line' : true,
-                'label' : true,
-                'labelOffsetX' : -40,
-                'labelOffsetY' : 0,
-                'labelRotate' : -90
-            }
-          }
-        }
-        d3.bar(chart1, settings);
-      };
+        d3.bar(chart1, {dataUrl:'data2.json', elements : {layoutType: 'stacked'}});
+      }
 
-       function update2() {
-        var settings = {
-          'dataUrl' : 'data2.csv',
-          'elements' : {
-            'barColor' : '#fd8',
-            'barWidth' : 5,
-            'xAxis' : {
-                'visible' : true,
-                'tickSize' : 0,
-                'label' : true,
-                'labelOffsetX' : 0,
-                'labelOffsetY' : 40,
-                'labelRotate' : 0
-            },
-            'yAxis' : {
-                'visible' : true,
-                'label' : true,
-                'labelOffsetX' : -40,
-                'labelOffsetY' : 0,
-                'labelRotate' : -90
-            }
-          }
-        }
-        d3.bar(chart1, settings);
-      };
+      function update2() {
+        d3.bar(chart1, {dataUrl:'data1.json', elements : {layoutType: 'grouped'}});
+      }
 
       function update3() {
-        var settings = {
-          'dataUrl' : 'data4.csv'
-        }
-        d3.bar(chart2, settings);
-      };
+        d3.bar(chart2, {
+          dataUrl:'data2.csv', 
+          elements : {
+            layoutType: 'stacked',
+            xAxis : {
+              domainMin : 'data-min'
+            }
+          }
+        });
+      }
 
-       function update4() {
-        var settings = {
-          'dataUrl' : 'data3.csv'
-        }
-        d3.bar(chart2, settings);
-      };
-
-      function makeSineWave() {
-        var num = 40;
-        var data = d3.range(num).map(function(i) {
-                return {x: i / (num-1), y: (Math.sin(i / 2) + 2) / 4};
-            });
-
-        return data;
-      };
+      function update4() {
+        d3.bar(chart2, {
+          dataUrl:'data1.csv', 
+          elements : {
+            layoutType: 'stacked',
+            xAxis : {
+              domainMin : null
+            }
+          },
+        });
+      }
       
     </script>
-    <button id="btn1" onclick="update1()">graph 1, data 2</button>
-    <button id="btn2" onclick="update2()">graph 1, data 1</button>
 
+    
    
-    <button id="btn3" onclick="update3()">graph 2, data 2</button>
-    <button id="btn4" onclick="update4()">graph 2, data 1</button>
   </body>
 </html>
